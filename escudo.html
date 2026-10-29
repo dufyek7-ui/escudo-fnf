@@ -10,45 +10,66 @@
             background: transparent;
             font-family: 'Montserrat', Arial, sans-serif;
         }
-        /* Contenedor principal del escudo - Oculto por defecto */
+        
+        /* Contenedor principal: Siempre visible */
         #escudo-box {
-            display: none; 
             position: absolute;
             top: 20px;
             left: 20px;
             background: rgba(0, 0, 0, 0.85);
-            border: 3px solid #ff4757;
+            border: 3px solid #555; /* Borde por defecto (inactivo) */
             border-radius: 12px;
             padding: 15px 25px;
             color: #fff;
             text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        /* Estilo cuando está ACTIVO (Bloqueado) */
+        #escudo-box.activo {
+            border-color: #ff4757;
             box-shadow: 0 0 15px rgba(255, 71, 87, 0.8);
         }
+
         .titulo {
             font-size: 16px;
             font-weight: bold;
-            color: #ff6b81;
+            color: #aaa; /* Color grisáceo por defecto */
             text-transform: uppercase;
             margin-bottom: 5px;
+            transition: color 0.3s ease;
         }
+
+        #escudo-box.activo .titulo {
+            color: #ff6b81; /* Color rojo/rosa cuando está activo */
+        }
+
         .contador {
             font-size: 36px;
             font-weight: 900;
-            color: #fff;
+            color: #888; /* Gris por defecto */
             font-family: monospace;
+            transition: color 0.3s ease;
+        }
+
+        #escudo-box.activo .contador {
+            color: #fff; /* Blanco brillante cuando está activo */
         }
     </style>
 </head>
 <body>
 
     <div id="escudo-box">
-        <div class="titulo">🛡️ Escudo FNF Activo 🛡️</div>
-        <div class="contador"><span id="tiempo">0</span>s</div>
+        <div id="titulo-texto" class="titulo">Rosas No Bloqueadas</div>
+        <div class="contador"><span id="tiempo">00:00</span></div>
     </div>
 
     <script>
-        // Conexión WebSocket al servidor local de Streamer.bot (puerto 8080)
+        // Conexión WebSocket al servidor local de Streamer.bot (Puerto 8080)
         const ws = new WebSocket("ws://127.0.0.1:8080/");
+        let tiempoRestante = 0;
+        let timerInterval = null;
 
         ws.onopen = () => {
             console.log("Conectado a Streamer.bot exitosamente.");
@@ -59,22 +80,62 @@
                 const packet = JSON.parse(event.data);
                 const data = packet.data || packet;
                 
-                // Escucha la acción enviada desde los scripts de C#
                 if (data.action === "actualizarEscudo") {
-                    const caja = document.getElementById("escudo-box");
-                    const spanTiempo = document.getElementById("tiempo");
-
                     if (data.activo && data.segundos > 0) {
-                        caja.style.display = "block"; // Muestra el escudo
-                        spanTiempo.innerText = data.segundos; // Actualiza los segundos en tiempo real
+                        tiempoRestante = data.segundos;
+                        activarModoBloqueado();
+                        
+                        // Sincronizamos el conteo local regresivo en la web
+                        clearInterval(timerInterval);
+                        timerInterval = setInterval(() => {
+                            if (tiempoRestante > 0) {
+                                tiempoRestante--;
+                                actualizarDisplayTiempo(tiempoRestante);
+                            } else {
+                                clearInterval(timerInterval);
+                                activarModoDesbloqueado();
+                            }
+                        }, 1000);
+
                     } else {
-                        caja.style.display = "none"; // Oculta el escudo cuando expira o se apaga
+                        clearInterval(timerInterval);
+                        activarModoDesbloqueado();
                     }
                 }
             } catch (error) {
                 console.error("Error al procesar el mensaje:", error);
             }
         };
+
+        function activarModoBloqueado() {
+            const caja = document.getElementById("escudo-box");
+            const titulo = document.getElementById("titulo-texto");
+            
+            caja.classList.add("activo");
+            titulo.innerText = "Rosas Bloqueadas";
+            actualizarDisplayTiempo(tiempoRestante);
+        }
+
+        function activarModoDesbloqueado() {
+            const caja = document.getElementById("escudo-box");
+            const titulo = document.getElementById("titulo-texto");
+            const spanTiempo = document.getElementById("tiempo");
+            
+            caja.classList.remove("activo");
+            titulo.innerText = "Rosas No Bloqueadas";
+            spanTiempo.innerText = "00:00";
+        }
+
+        function actualizarDisplayTiempo(segTotal) {
+            const minutos = Math.floor(segTotal / 60);
+            const segundos = segTotal % 60;
+            
+            // Formatea siempre a dos dígitos (ej: 00:15, 01:05)
+            const minStr = String(minutos).padStart(2, '0');
+            const segStr = String(segundos).padStart(2, '0');
+            
+            document.getElementById("tiempo").innerText = `${minStr}:${segStr}`;
+        }
 
         ws.onclose = () => {
             console.log("Desconectado de Streamer.bot. Reintentando...");
