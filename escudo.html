@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Shield Timer Test</title>
     <style>
         body {
             margin: 0;
@@ -9,19 +10,19 @@
             background: transparent;
             font-family: 'Montserrat', Arial, sans-serif;
         }
-        /* Contenedor principal del escudo */
+        /* Contenedor principal del escudo - VISIBLE PARA PRUEBAS */
         #escudo-box {
-            display: none; /* Empieza oculto por defecto */
+            display: block !important; /* Forzamos que siempre se vea */
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.85);
             border: 3px solid #ff4757;
             border-radius: 12px;
             padding: 15px 25px;
             color: #fff;
             text-align: center;
-            box-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.8);
         }
         .titulo {
             font-size: 16px;
@@ -41,8 +42,8 @@
 <body>
 
     <div id="escudo-box">
-        <div class="titulo">🛡️ Escudo FNF Activo 🛡️</div>
-        <div class="contador"><span id="tiempo">0</span>s</div>
+        <div class="titulo">🛡️ MODO PRUEBA VISIBLE 🛡️</div>
+        <div class="contador"><span id="tiempo">60</span>s</div>
     </div>
 
     <script>
@@ -57,16 +58,10 @@
             try {
                 const data = JSON.parse(event.data);
                 
-                // Detecta el mensaje personalizado enviado desde tus scripts de C# en Streamer.bot
                 if (data.action === "actualizarEscudo") {
-                    const caja = document.getElementById("escudo-box");
                     const spanTiempo = document.getElementById("tiempo");
-
-                    if (data.activo) {
-                        caja.style.display = "block";
+                    if (data.segundos !== undefined) {
                         spanTiempo.innerText = data.segundos;
-                    } else {
-                        caja.style.display = "none";
                     }
                 }
             } catch (error) {
