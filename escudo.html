@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent; /* Fondo transparente para que solo se vea el texto/diseño */
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+        /* Contenedor principal del escudo */
+        #escudo-box {
+            display: none; /* Por defecto empieza oculto */
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 3px solid #ff4757;
+            border-radius: 12px;
+            padding: 15px 25px;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.6);
+        }
+        .titulo {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff6b81;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .contador {
+            font-size: 36px;
+            font-weight: 900;
+            color: #fff;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="escudo-box">
+        <div class="titulo">🛡️ Escudo FNF Activo 🛡️</div>
+        <div class="contador"><span id="tiempo">0</span>s</div>
+    </div>
+
+    <script>
+        let segundosVisuales = 0;
+        let websocket = null;
+
+        // Conexión por WebSocket a Streamer.bot (por defecto corre en el puerto 8080)
+        function conectarStreamerBot() {
+            websocket = new WebSocket("ws://127.0.0.1:8080/");
+
+            websocket.onopen = function() {
+                console.log("Conectado a Streamer.bot");
+                // Nos suscribimos para escuchar eventos de variables globales
+                websocket.send(JSON.stringify({
+                    request: "Subscribe",
+                    events: { "General": ["Custom"] }
+                }));
+            };
+
+            websocket.onmessage = function(event) {
+                let data = JSON.parse(event.data);
+                // Si recibimos actualización de variables globales
+                if (data.event && data.event.type === "Custom") {
+                    actualizarEstadoVisual();
+                }
+            };
+
+            websocket.onclose = function() {
+                setTimeout(conectarStreamerBot, 3000); // Reconecta si se desconecta
+            };
+        }
+
+        // Función para consultar el estado actual de las variables a Streamer.bot
+        async function consultarVariables() {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                // Aquí pedimos los valores directo a Streamer.bot
+                // Nota: Streamer.bot responde a peticiones getGlobals si está configurado, 
+                // pero también podemos hacerlo consultando mediante fetch o usando el cliente nativo.
+            }
+        }
+
+        // Reloj local de la página para que baje fluidamente segundo a segundo
+        setInterval(() => {
+            if (segundosVisuales > 0) {
+                segundosVisuales--;
+                document.getElementById("tiempo").innerText = segundosVisuales;
+                
+                if (segundosVisuales <= 0) {
+                    document.getElementById("escudo-box").style.display = "none";
+                }
+            }
+        }, 1000);
+
+        // Función para sincronizar con Streamer.bot de manera rápida consultando por HTTP o WebSocket endpoint
+        // Como Streamer.bot maneja un servidor web integrado, puedes usar las endpoints locales o el sistema de plantillas.
+        // La forma más fácil y directa en widgets locales de Streamer.bot:
+        asynclander = async function() {
+            try {
+                let response = await fetch('http://127.0.0.1:7474/v1/variables?name=segundosEscudo'); // O endpoint nativo si usas Websocket server
+            } catch(e) {}
+        }
+
+        // --- MÉTODO SENCILLO CON WEBSOCKET NATIVO DE STREAMER.BOT ---
+        // Para evitar complicaciones de red, Streamer.bot actualiza ficheros locales o puedes usar 
+        // la integración de Streamer.bot para inyectar variables en HTML mediante WebSockets de Obs/Streamer.bot.
+        
+        conectarStreamerBot();
+    </script>
+</body>
+</html>
