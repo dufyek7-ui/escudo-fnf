@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Shield Timer Test</title>
+    <title>Shield Timer FNF</title>
     <style>
         body {
             margin: 0;
@@ -10,9 +10,9 @@
             background: transparent;
             font-family: 'Montserrat', Arial, sans-serif;
         }
-        /* Contenedor principal del escudo - VISIBLE PARA PRUEBAS */
+        /* Contenedor principal del escudo - Oculto por defecto */
         #escudo-box {
-            display: block !important; /* Forzamos que siempre se vea */
+            display: none; 
             position: absolute;
             top: 20px;
             left: 20px;
@@ -42,8 +42,8 @@
 <body>
 
     <div id="escudo-box">
-        <div class="titulo">🛡️ MODO PRUEBA VISIBLE 🛡️</div>
-        <div class="contador"><span id="tiempo">60</span>s</div>
+        <div class="titulo">🛡️ Escudo FNF Activo 🛡️</div>
+        <div class="contador"><span id="tiempo">0</span>s</div>
     </div>
 
     <script>
@@ -56,12 +56,19 @@
 
         ws.onmessage = (event) => {
             try {
-                const data = JSON.parse(event.data);
+                const packet = JSON.parse(event.data);
+                const data = packet.data || packet;
                 
+                // Escucha la acción enviada desde los scripts de C#
                 if (data.action === "actualizarEscudo") {
+                    const caja = document.getElementById("escudo-box");
                     const spanTiempo = document.getElementById("tiempo");
-                    if (data.segundos !== undefined) {
-                        spanTiempo.innerText = data.segundos;
+
+                    if (data.activo && data.segundos > 0) {
+                        caja.style.display = "block"; // Muestra el escudo
+                        spanTiempo.innerText = data.segundos; // Actualiza los segundos en tiempo real
+                    } else {
+                        caja.style.display = "none"; // Oculta el escudo cuando expira o se apaga
                     }
                 }
             } catch (error) {
